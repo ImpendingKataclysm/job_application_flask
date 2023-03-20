@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
+from datetime import datetime
 import os
 
 load_dotenv()
@@ -12,6 +13,9 @@ db = SQLAlchemy(app)
 
 
 class Form(db.Model):
+    """
+    Structures the table that will hold the applicant information in the database
+    """
     MAX_INPUT_LEN = 80
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(MAX_INPUT_LEN))
@@ -24,8 +28,8 @@ class Form(db.Model):
 @app.route("/", methods=["GET", "POST"])
 def index():
     """
-    Stores data entered by user if sent via post request, otherwise displays
-    the web page
+    Renders the application web page. If user has sent information via post
+    request, their information is stored in a database.
     :return: A call to render the web page
     """
     if request.method == "POST":
@@ -33,9 +37,16 @@ def index():
         last_name = request.form["last_name"]
         email = request.form["email"]
         date = request.form["date"]
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
         employment_status = request.form["employment_status"]
 
-        print(f"{first_name} {last_name} {email} {date} {employment_status}")
+        form = Form(first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    date=date_obj,
+                    employment_status=employment_status)
+        db.session.add(form)
+        db.session.commit()
 
     return render_template("index.html")
 

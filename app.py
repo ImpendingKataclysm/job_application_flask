@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from datetime import datetime
@@ -47,6 +47,7 @@ def index():
                     employment_status=employment_status)
         db.session.add(form)
         db.session.commit()
+        flash("Application sent successfully", "success")
 
     return render_template("index.html")
 

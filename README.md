@@ -1,2 +1,2 @@
 # job_application_flask
- A simple job application form built in Flask.
+ Online job application form built in Flask.

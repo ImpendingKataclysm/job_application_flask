@@ -1,14 +1,19 @@
 from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 from datetime import datetime
-import os
-
-load_dotenv()
+from send_email import send_email
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["SECRET_KEY"] = dotenv_values().get("SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 456
+app.config["MAIL_USE_SSL"] = True
+app.config["MAIL_USE_TLS"] = False
+app.config["MAIL_USERNAME"] = dotenv_values().get("GMAIL_USER")
+app.config["MAIL_PASSWORD"] = dotenv_values().get("GMAIL_PASS")
+
 db = SQLAlchemy(app)
 
 
@@ -33,13 +38,15 @@ def index():
     :return: A call to render the web page
     """
     if request.method == "POST":
+        # Get user data
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
-        email = request.form["email"]
+        email = request.form["email"].strip()
         date = request.form["date"]
         date_obj = datetime.strptime(date, "%Y-%m-%d")
         employment_status = request.form["employment_status"]
 
+        # Add user data to database
         form = Form(first_name=first_name,
                     last_name=last_name,
                     email=email,
@@ -47,6 +54,10 @@ def index():
                     employment_status=employment_status)
         db.session.add(form)
         db.session.commit()
+
+        # Send confirmation email
+        message_body = f"Thank you for your application, {first_name}!"
+        send_email(email, message_body)
         flash("Application sent successfully", "success")
 
     return render_template("index.html")
